@@ -1,0 +1,52 @@
+name: Accept Package Upload
+
+on:
+  repository_dispatch:
+    types: [upload-package]
+
+jobs:
+  process-upload:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Process package upload
+      run: |
+        echo "Package upload request received"
+        echo "Package URL: ${{ github.event.client_payload.package_url }}"
+        echo "Package Name: ${{ github.event.client_payload.package_name }}"
+        echo "Distribution: ${{ github.event.client_payload.distribution }}"
+        echo "Component: ${{ github.event.client_payload.component }}"
+        echo "Sender: ${{ github.event.client_payload.sender }}"
+        
+        # Create incoming directory
+        mkdir -p incoming
+        
+        # Download the package
+        if [ -n "${{ github.event.client_payload.package_url }}" ]; then
+          curl -L -o "incoming/${{ github.event.client_payload.package_name }}" "${{ github.event.client_payload.package_url }}"
+          echo "Package downloaded successfully"
+          
+          # Verify it's a valid .deb file
+          if file "incoming/${{ github.event.client_payload.package_name }}" | grep -q "Debian binary package"; then
+            echo "Valid Debian package confirmed"
+            
+            # Commit the package to trigger rebuild
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git add incoming/
+            git commit -m "Add package: ${{ github.event.client_payload.package_name }}"
+            git push
+          else
+            echo "Error: Invalid package file"
+            rm "incoming/${{ github.event.client_payload.package_name }}"
+            exit 1
+          fi
+        else
+          echo "Error: No package URL provided"
+          exit 1
+        fi
