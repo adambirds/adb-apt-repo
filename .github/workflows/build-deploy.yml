@@ -195,11 +195,14 @@ jobs:
                     <li><a href="./pubkey.gpg">Download GPG public key</a></li>
                 </ul>
                 
-                <p><em>Last updated: $(date)</em></p>
+                <p><em>Last updated: </em></p>
             </div>
         </body>
         </html>
         EOF
+        
+        # Add the current date to the index page
+        sed -i "s|Last updated: </em>|Last updated: $(date)</em>|" index.html
 
     - name: Create directory index pages
       run: |
