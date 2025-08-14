@@ -68,32 +68,69 @@ jobs:
 
     - name: Process incoming packages
       run: |
-        # Create directories if they don't exist
-        mkdir -p dists pool incoming
-        
-        # Process any packages in the incoming directory
-        if [ -d incoming ] && [ "$(ls -A incoming/*.deb 2>/dev/null)" ]; then
-          echo "Processing packages in incoming directory..."
-          for deb_file in incoming/*.deb; do
-            if [ -f "$deb_file" ]; then
-              echo "Processing: $deb_file"
-              # Extract package info
-              package_name=$(dpkg-deb -f "$deb_file" Package)
-              architecture=$(dpkg-deb -f "$deb_file" Architecture)
+          echo "Processing incoming packages..."
+          
+          # Create necessary directories if they don't exist
+          mkdir -p dists pool
+          
+          # Process stable packages
+          for component in main contrib; do
+            stable_dir="incoming/stable/$component"
+            if [ -d "$stable_dir" ] && [ "$(ls -A $stable_dir/*.deb 2>/dev/null || true)" ]; then
+              echo "Found packages in $stable_dir:"
+              ls -la "$stable_dir/"
               
-              echo "Package: $package_name"
-              echo "Architecture: $architecture"
-              
-              # Add to repository
-              reprepro includedeb "${DISTRIBUTION:-stable}" "$deb_file"
-              
-              # Remove processed file
-              rm "$deb_file"
+              for deb in "$stable_dir"/*.deb; do
+                if [ -f "$deb" ]; then
+                  echo "Adding $deb to stable distribution (component: $component)..."
+                  reprepro -C "$component" includedeb stable "$deb"
+                  rm "$deb"
+                fi
+              done
+            else
+              echo "No packages found in $stable_dir/"
             fi
           done
-        else
-          echo "No new packages to process"
-        fi
+          
+          # Process testing packages
+          for component in main contrib; do
+            testing_dir="incoming/testing/$component"
+            if [ -d "$testing_dir" ] && [ "$(ls -A $testing_dir/*.deb 2>/dev/null || true)" ]; then
+              echo "Found packages in $testing_dir:"
+              ls -la "$testing_dir/"
+              
+              for deb in "$testing_dir"/*.deb; do
+                if [ -f "$deb" ]; then
+                  echo "Adding $deb to testing distribution (component: $component)..."
+                  reprepro -C "$component" includedeb testing "$deb"
+                  rm "$deb"
+                fi
+              done
+            else
+              echo "No packages found in $testing_dir/"
+            fi
+          done
+          
+          # Process any legacy packages in root incoming directory (for backwards compatibility)
+          if [ -d incoming ] && [ "$(ls -A incoming/*.deb 2>/dev/null || true)" ]; then
+            echo "Processing legacy packages in root incoming directory..."
+            for deb_file in incoming/*.deb; do
+              if [ -f "$deb_file" ]; then
+                echo "Processing legacy package: $deb_file"
+                package_name=$(dpkg-deb -f "$deb_file" Package)
+                version=$(dpkg-deb -f "$deb_file" Version)
+                
+                # Default to stable for legacy uploads
+                echo "Adding legacy package to stable distribution"
+                reprepro includedeb stable "$deb_file"
+                rm "$deb_file"
+              fi
+            done
+          fi
+          
+          if [ ! -f incoming/stable/main/*.deb ] && [ ! -f incoming/stable/contrib/*.deb ] && [ ! -f incoming/testing/main/*.deb ] && [ ! -f incoming/testing/contrib/*.deb ] && [ ! -f incoming/*.deb ]; then
+            echo "No new packages to process"
+          fi
 
     - name: Generate repository metadata
       run: |

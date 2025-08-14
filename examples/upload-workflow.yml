@@ -4,7 +4,7 @@
 # Required Secret: APT_REPO_TOKEN
 # Create a fine-grained personal access token with these permissions:
 # - Repository access: adb-apt-repo
-# - Actions: Write, Contents: Write, Metadata: Read
+# - Contents: Write, Metadata: Read
 
 name: Upload to APT Repository
 
@@ -62,42 +62,34 @@ jobs:
 
     - name: Upload to APT Repository
       env:
-        GITHUB_TOKEN: ${{ secrets.APT_REPO_TOKEN }}
+        APT_REPO_TOKEN: ${{ secrets.APT_REPO_TOKEN }}
       run: |
         PACKAGE_FILE="${{ steps.find-package.outputs.package_path }}"
         PACKAGE_NAME="${{ steps.find-package.outputs.package_name }}"
         DISTRIBUTION="${{ github.event.inputs.distribution || 'stable' }}"
         COMPONENT="${{ github.event.inputs.component || 'main' }}"
         
-        # Create temporary release for file upload
-        RELEASE_DATA="{\"tag_name\": \"temp-$(date +%s)\", \"name\": \"Temp Upload\", \"body\": \"Temporary\", \"draft\": true}"
-        RELEASE_ID=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-          -H "Content-Type: application/json" \
-          -d "$RELEASE_DATA" \
-          "https://api.github.com/repos/AdamBirds/adb-apt-repo/releases" | \
-          grep -o '"id": [0-9]*' | head -1 | cut -d' ' -f2)
+        echo "Uploading package: $PACKAGE_NAME"
+        echo "Target: $DISTRIBUTION/$COMPONENT"
         
-        # Upload package
-        ASSET_URL=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-          -H "Content-Type: application/octet-stream" \
-          --data-binary @"$PACKAGE_FILE" \
-          "https://uploads.github.com/repos/AdamBirds/adb-apt-repo/releases/$RELEASE_ID/assets?name=$PACKAGE_NAME" | \
-          grep -o '"browser_download_url": "[^"]*"' | cut -d'"' -f4)
+        # Clone the APT repository
+        git clone https://x-access-token:$APT_REPO_TOKEN@github.com/adambirds/adb-apt-repo.git apt-repo
+        cd apt-repo
         
-        # Trigger repository dispatch
-        DISPATCH_DATA="{\"event_type\": \"upload-package\", \"client_payload\": {\"package_url\": \"$ASSET_URL\", \"package_name\": \"$PACKAGE_NAME\", \"distribution\": \"$DISTRIBUTION\", \"component\": \"$COMPONENT\", \"sender\": \"$GITHUB_REPOSITORY\"}}"
+        # Set up git config
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git config user.name "github-actions[bot]"
         
-        curl -H "Authorization: token $GITHUB_TOKEN" \
-          -H "Content-Type: application/json" \
-          -d "$DISPATCH_DATA" \
-          "https://api.github.com/repos/AdamBirds/adb-apt-repo/dispatches"
+        # Create target directory if it doesn't exist
+        mkdir -p "incoming/$DISTRIBUTION/$COMPONENT"
         
-        echo "Package $PACKAGE_NAME uploaded successfully!"
-        echo "Distribution: $DISTRIBUTION"
-        echo "Component: $COMPONENT"
+        # Copy the package to the appropriate directory
+        cp "../$PACKAGE_FILE" "incoming/$DISTRIBUTION/$COMPONENT/"
         
-        # Schedule cleanup of temporary release
-        sleep 10
-        curl -s -H "Authorization: token $GITHUB_TOKEN" \
-          -X DELETE \
-          "https://api.github.com/repos/AdamBirds/adb-apt-repo/releases/$RELEASE_ID" || true
+        # Commit and push
+        git add "incoming/$DISTRIBUTION/$COMPONENT/"
+        git commit -m "feat: Add $DISTRIBUTION/$COMPONENT package $PACKAGE_NAME."
+        git push
+        
+        echo "✅ Package $PACKAGE_NAME uploaded successfully to $DISTRIBUTION/$COMPONENT!"
+        echo "The package will be processed and added to the repository automatically."

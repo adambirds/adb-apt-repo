@@ -61,7 +61,9 @@ Your repository will be available at: `https://yourusername.github.io/adb-apt-re
 ├── conf/                 # reprepro configuration files
 ├── scripts/             # Helper scripts for package management
 ├── .github/workflows/   # GitHub Actions workflows
-├── incoming/            # Temporary directory for incoming packages
+├── incoming/            # Incoming packages directory
+│   ├── stable/          # Production-ready packages → stable distribution
+│   └── testing/         # Development/beta packages → testing distribution
 ├── examples/            # Example workflows for other repositories
 ├── dists/              # Generated repository metadata (auto-generated)
 └── pool/               # Package storage (auto-generated)
@@ -135,7 +137,9 @@ To upload packages from your GitHub Actions workflows, use the provided upload s
 
 ### Manual Upload
 
-1. Place your `.deb` file in the `incoming/` directory
+1. Place your `.deb` file in the appropriate incoming directory:
+   - `incoming/stable/` for production releases → stable distribution
+   - `incoming/testing/` for development/beta packages → testing distribution
 2. The GitHub Actions workflow will automatically process it
 
 ## Using the Repository
