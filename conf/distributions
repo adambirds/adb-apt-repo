@@ -1,0 +1,15 @@
+Origin: ADB APT Repository
+Label: ADB APT Repository  
+Codename: stable
+Architectures: amd64 arm64 armhf
+Components: main contrib
+Description: ADB stable packages
+SignWith: default
+
+Origin: ADB APT Repository
+Label: ADB APT Repository
+Codename: testing  
+Architectures: amd64 arm64 armhf
+Components: main contrib
+Description: ADB testing packages
+SignWith: default

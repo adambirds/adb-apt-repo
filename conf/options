@@ -1,0 +1,4 @@
+# reprepro options configuration
+verbose
+ask-passphrase
+basedir .
