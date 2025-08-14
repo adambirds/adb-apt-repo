@@ -1,5 +1,10 @@
 # Example GitHub Actions workflow for uploading packages to ADB APT Repository
 # Copy this workflow to your repository's .github/workflows/ directory
+#
+# Required Secret: APT_REPO_TOKEN
+# Create a fine-grained personal access token with these permissions:
+# - Repository access: adb-apt-repo
+# - Actions: Write, Contents: Write, Metadata: Read
 
 name: Upload to APT Repository
 

@@ -120,7 +120,18 @@ To upload packages from your GitHub Actions workflows, use the provided upload s
     ./upload-to-apt-repo.sh your-package.deb stable main
 ```
 
-**Note**: External repositories need a `APT_REPO_TOKEN` secret with a GitHub personal access token that has repository access.
+**Note**: External repositories need a `APT_REPO_TOKEN` secret with a GitHub fine-grained personal access token.
+
+**To create the fine-grained token:**
+1. Go to GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens
+2. Generate new token with these settings:
+   - **Resource owner**: Your account (or organization)
+   - **Repository access**: Selected repositories → `adb-apt-repo`
+   - **Repository permissions**:
+     - `Actions`: Write (to trigger repository dispatch)
+     - `Contents`: Write (for release assets)
+     - `Metadata`: Read (required baseline permission)
+3. Copy the token and add it as `APT_REPO_TOKEN` secret in your app repository
 
 ### Manual Upload
 

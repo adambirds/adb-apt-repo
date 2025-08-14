@@ -122,7 +122,19 @@ export GITHUB_TOKEN="your-personal-access-token"
 
 Copy the example workflow from `examples/upload-workflow.yml` to your repository's `.github/workflows/` directory.
 
-Add a secret called `APT_REPO_TOKEN` to your repository with a GitHub personal access token that has access to the apt repository.
+Add a secret called `APT_REPO_TOKEN` to your repository with a GitHub fine-grained personal access token:
+
+**To create the fine-grained token:**
+1. Go to **GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens**
+2. Click **Generate new token**
+3. Configure:
+   - **Resource owner**: Your account
+   - **Repository access**: Selected repositories → `adb-apt-repo`
+   - **Repository permissions**:
+     - `Actions`: Write (to trigger workflows)
+     - `Contents`: Write (for release assets)
+     - `Metadata`: Read (required)
+4. Copy the token and add it as `APT_REPO_TOKEN` secret in your app repository
 
 The workflow will automatically upload .deb packages when you create a release.
 
