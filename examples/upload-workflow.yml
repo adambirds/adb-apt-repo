@@ -1,0 +1,98 @@
+# Example GitHub Actions workflow for uploading packages to ADB APT Repository
+# Copy this workflow to your repository's .github/workflows/ directory
+
+name: Upload to APT Repository
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      package_path:
+        description: 'Path to the .deb package'
+        required: true
+        default: '*.deb'
+      distribution:
+        description: 'Target distribution'
+        required: false
+        default: 'stable'
+        type: choice
+        options:
+          - stable
+          - testing
+      component:
+        description: 'Target component'
+        required: false
+        default: 'main'
+        type: choice
+        options:
+          - main
+          - contrib
+
+jobs:
+  upload-package:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Find package file
+      id: find-package
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          PACKAGE_PATH="${{ github.event.inputs.package_path }}"
+        else
+          # For release events, look for .deb files in common locations
+          PACKAGE_PATH=$(find . -name "*.deb" | head -1)
+        fi
+        
+        if [ -z "$PACKAGE_PATH" ] || [ ! -f "$PACKAGE_PATH" ]; then
+          echo "Error: No .deb package found"
+          exit 1
+        fi
+        
+        echo "package_path=$PACKAGE_PATH" >> $GITHUB_OUTPUT
+        echo "package_name=$(basename $PACKAGE_PATH)" >> $GITHUB_OUTPUT
+
+    - name: Upload to APT Repository
+      env:
+        GITHUB_TOKEN: ${{ secrets.APT_REPO_TOKEN }}
+      run: |
+        PACKAGE_FILE="${{ steps.find-package.outputs.package_path }}"
+        PACKAGE_NAME="${{ steps.find-package.outputs.package_name }}"
+        DISTRIBUTION="${{ github.event.inputs.distribution || 'stable' }}"
+        COMPONENT="${{ github.event.inputs.component || 'main' }}"
+        
+        # Create temporary release for file upload
+        RELEASE_DATA="{\"tag_name\": \"temp-$(date +%s)\", \"name\": \"Temp Upload\", \"body\": \"Temporary\", \"draft\": true}"
+        RELEASE_ID=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d "$RELEASE_DATA" \
+          "https://api.github.com/repos/AdamBirds/adb-apt-repo/releases" | \
+          grep -o '"id": [0-9]*' | head -1 | cut -d' ' -f2)
+        
+        # Upload package
+        ASSET_URL=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+          -H "Content-Type: application/octet-stream" \
+          --data-binary @"$PACKAGE_FILE" \
+          "https://uploads.github.com/repos/AdamBirds/adb-apt-repo/releases/$RELEASE_ID/assets?name=$PACKAGE_NAME" | \
+          grep -o '"browser_download_url": "[^"]*"' | cut -d'"' -f4)
+        
+        # Trigger repository dispatch
+        DISPATCH_DATA="{\"event_type\": \"upload-package\", \"client_payload\": {\"package_url\": \"$ASSET_URL\", \"package_name\": \"$PACKAGE_NAME\", \"distribution\": \"$DISTRIBUTION\", \"component\": \"$COMPONENT\", \"sender\": \"$GITHUB_REPOSITORY\"}}"
+        
+        curl -H "Authorization: token $GITHUB_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d "$DISPATCH_DATA" \
+          "https://api.github.com/repos/AdamBirds/adb-apt-repo/dispatches"
+        
+        echo "Package $PACKAGE_NAME uploaded successfully!"
+        echo "Distribution: $DISTRIBUTION"
+        echo "Component: $COMPONENT"
+        
+        # Schedule cleanup of temporary release
+        sleep 10
+        curl -s -H "Authorization: token $GITHUB_TOKEN" \
+          -X DELETE \
+          "https://api.github.com/repos/AdamBirds/adb-apt-repo/releases/$RELEASE_ID" || true

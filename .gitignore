@@ -1,0 +1,39 @@
+# reprepro database and temporary files
+db/
+*.db
+*.lock
+
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# GPG files (keep public key, exclude private)
+secring.gpg
+trustdb.gpg
+random_seed
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Build artifacts
+build/
+dist/
+
+# Node modules (if using any JS tools)
+node_modules/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo

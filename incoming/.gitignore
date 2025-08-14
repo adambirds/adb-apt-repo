@@ -1,0 +1,5 @@
+# This directory is used for incoming packages
+# Packages placed here will be automatically processed by GitHub Actions
+# and added to the repository
+
+*.deb
