@@ -213,133 +213,88 @@ jobs:
 
     - name: Create directory index files for GitHub Pages
       run: |
-        # Create index.html files for main directories that APT clients access
+        # Create a script to generate index.html for any directory
+        cat > generate_indexes.sh << 'EOF'
+        #!/bin/bash
         
-        # Main dists directory
-        cat > dists/index.html << 'EOF'
+        generate_index() {
+            local dir="$1"
+            local title="APT Repository - $(echo "$dir" | sed 's|^./||' | sed 's|/$||')"
+            
+            cat > "$dir/index.html" << HTML
         <!DOCTYPE html>
         <html>
         <head>
-            <title>APT Repository - Distributions</title>
+            <title>$title</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .container { max-width: 800px; }
+                .breadcrumb { color: #666; margin-bottom: 20px; }
+                ul { list-style-type: none; padding: 0; }
+                li { margin: 5px 0; }
+                a { text-decoration: none; color: #0366d6; }
+                a:hover { text-decoration: underline; }
+                .dir { font-weight: bold; }
+                .file { color: #333; }
+            </style>
         </head>
         <body>
-            <h1>APT Repository - Distributions</h1>
-            <p>Available distributions:</p>
-            <ul>
-                <li><a href="stable/">stable/</a></li>
-                <li><a href="testing/">testing/</a></li>
-            </ul>
+            <div class="container">
+                <div class="breadcrumb">$dir</div>
+                <h1>$(basename "$dir")</h1>
+                <ul>
+        HTML
+            
+            # Add parent directory link if not root
+            if [ "$dir" != "./" ] && [ "$dir" != "." ]; then
+                echo '                    <li><a href="../" class="dir">📁 ../</a></li>' >> "$dir/index.html"
+            fi
+            
+            # List directories first
+            for item in "$dir"*/; do
+                if [ -d "$item" ] && [ "$(basename "$item")" != ".git" ] && [ "$(basename "$item")" != ".github" ]; then
+                    name=$(basename "$item")
+                    echo "                    <li><a href=\"$name/\" class=\"dir\">📁 $name/</a></li>" >> "$dir/index.html"
+                fi
+            done
+            
+            # Then list files
+            for item in "$dir"*; do
+                if [ -f "$item" ] && [ "$(basename "$item")" != "index.html" ]; then
+                    name=$(basename "$item")
+                    if [[ "$name" == *.deb ]]; then
+                        echo "                    <li><a href=\"$name\" class=\"file\">📦 $name</a></li>" >> "$dir/index.html"
+                    else
+                        echo "                    <li><a href=\"$name\" class=\"file\">📄 $name</a></li>" >> "$dir/index.html"
+                    fi
+                fi
+            done
+            
+            cat >> "$dir/index.html" << 'HTML'
+                </ul>
+            </div>
         </body>
         </html>
+        HTML
+        }
+        
+        # Generate index files for all directories that need them
+        find . -type d -not -path './.git*' -not -path './db*' | while read -r dir; do
+            # Skip if directory is empty or only contains hidden files
+            if [ "$(ls -A "$dir" 2>/dev/null | grep -v '^\.' | head -1)" ]; then
+                generate_index "$dir"
+                echo "Generated index for: $dir"
+            fi
+        done
         EOF
         
-        # Main pool directory
-        cat > pool/index.html << 'EOF'
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>APT Repository - Package Pool</title>
-        </head>
-        <body>
-            <h1>APT Repository - Package Pool</h1>
-            <p>Package pool organized by component:</p>
-            <ul>
-                <li><a href="main/">main/</a></li>
-            </ul>
-        </body>
-        </html>
-        EOF
+        chmod +x generate_indexes.sh
+        ./generate_indexes.sh
         
         # Create .nojekyll to prevent GitHub Pages from processing files
         touch .nojekyll
         
-        # Create index files for subdirectories that exist
-        if [ -d "pool/main" ]; then
-          cat > pool/main/index.html << 'EOF'
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>APT Repository - Main Component</title>
-        </head>
-        <body>
-            <h1>APT Repository - Main Component</h1>
-            <p>Packages in the main component, organized by first letter:</p>
-            <ul>
-        EOF
-          
-          # List subdirectories in pool/main
-          for dir in pool/main/*/; do
-            if [ -d "$dir" ]; then
-              dirname=$(basename "$dir")
-              echo "                <li><a href=\"$dirname/\">$dirname/</a></li>" >> pool/main/index.html
-            fi
-          done
-          
-          cat >> pool/main/index.html << 'EOF'
-            </ul>
-        </body>
-        </html>
-        EOF
-        fi
-        
-        # Create index files for package directories
-        find pool -type d -mindepth 3 -maxdepth 3 | while read -r dir; do
-          cat > "$dir/index.html" << EOF
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>APT Repository - $(basename "$dir")</title>
-        </head>
-        <body>
-            <h1>Package: $(basename "$dir")</h1>
-            <p>Available package files:</p>
-            <ul>
-        EOF
-          
-          # List .deb files in this directory
-          for file in "$dir"/*.deb; do
-            if [ -f "$file" ]; then
-              filename=$(basename "$file")
-              echo "                <li><a href=\"$filename\">$filename</a></li>" >> "$dir/index.html"
-            fi
-          done
-          
-          cat >> "$dir/index.html" << 'EOF'
-            </ul>
-        </body>
-        </html>
-        EOF
-        done
-        
-        # Create index files for distribution subdirectories
-        for dist in stable testing; do
-          if [ -d "dists/$dist" ]; then
-            cat > "dists/$dist/index.html" << EOF
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>APT Repository - $dist Distribution</title>
-        </head>
-        <body>
-            <h1>$dist Distribution</h1>
-            <p>Available components:</p>
-            <ul>
-                <li><a href="main/">main/</a></li>
-                <li><a href="contrib/">contrib/</a></li>
-            </ul>
-            <p>Repository metadata:</p>
-            <ul>
-                <li><a href="Release">Release</a></li>
-                <li><a href="Release.gpg">Release.gpg</a></li>
-                <li><a href="InRelease">InRelease</a></li>
-            </ul>
-        </body>
-        </html>
-        EOF
-          fi
-        done
-        
-        echo "Created directory index files for GitHub Pages compatibility"
+        echo "Dynamically generated index files for all directories"
 
     - name: Debug artifact contents before upload
       run: |
