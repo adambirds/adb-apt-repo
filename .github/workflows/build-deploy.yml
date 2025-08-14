@@ -253,6 +253,92 @@ jobs:
         # Create .nojekyll to prevent GitHub Pages from processing files
         touch .nojekyll
         
+        # Create index files for subdirectories that exist
+        if [ -d "pool/main" ]; then
+          cat > pool/main/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>APT Repository - Main Component</title>
+        </head>
+        <body>
+            <h1>APT Repository - Main Component</h1>
+            <p>Packages in the main component, organized by first letter:</p>
+            <ul>
+        EOF
+          
+          # List subdirectories in pool/main
+          for dir in pool/main/*/; do
+            if [ -d "$dir" ]; then
+              dirname=$(basename "$dir")
+              echo "                <li><a href=\"$dirname/\">$dirname/</a></li>" >> pool/main/index.html
+            fi
+          done
+          
+          cat >> pool/main/index.html << 'EOF'
+            </ul>
+        </body>
+        </html>
+        EOF
+        fi
+        
+        # Create index files for package directories
+        find pool -type d -mindepth 3 -maxdepth 3 | while read -r dir; do
+          cat > "$dir/index.html" << EOF
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>APT Repository - $(basename "$dir")</title>
+        </head>
+        <body>
+            <h1>Package: $(basename "$dir")</h1>
+            <p>Available package files:</p>
+            <ul>
+        EOF
+          
+          # List .deb files in this directory
+          for file in "$dir"/*.deb; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              echo "                <li><a href=\"$filename\">$filename</a></li>" >> "$dir/index.html"
+            fi
+          done
+          
+          cat >> "$dir/index.html" << 'EOF'
+            </ul>
+        </body>
+        </html>
+        EOF
+        done
+        
+        # Create index files for distribution subdirectories
+        for dist in stable testing; do
+          if [ -d "dists/$dist" ]; then
+            cat > "dists/$dist/index.html" << EOF
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>APT Repository - $dist Distribution</title>
+        </head>
+        <body>
+            <h1>$dist Distribution</h1>
+            <p>Available components:</p>
+            <ul>
+                <li><a href="main/">main/</a></li>
+                <li><a href="contrib/">contrib/</a></li>
+            </ul>
+            <p>Repository metadata:</p>
+            <ul>
+                <li><a href="Release">Release</a></li>
+                <li><a href="Release.gpg">Release.gpg</a></li>
+                <li><a href="InRelease">InRelease</a></li>
+            </ul>
+        </body>
+        </html>
+        EOF
+          fi
+        done
+        
         echo "Created directory index files for GitHub Pages compatibility"
 
     - name: Debug artifact contents before upload
