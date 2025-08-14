@@ -141,6 +141,16 @@ jobs:
         echo "Repository contents:" > repository-info.txt
         reprepro list stable >> repository-info.txt 2>/dev/null || true
         reprepro list testing >> repository-info.txt 2>/dev/null || true
+        
+        # Debug: Check what directories were created
+        echo "=== Debugging: Directory structure after reprepro ==="
+        ls -la
+        echo "=== Contents of dists/ directory ==="
+        ls -la dists/ || echo "dists/ directory not found"
+        echo "=== Contents of pool/ directory ==="
+        ls -la pool/ || echo "pool/ directory not found"
+        echo "=== Full directory tree ==="
+        find . -type d | head -20
 
     - name: Create index page
       run: |
@@ -200,6 +210,15 @@ jobs:
         </body>
         </html>
         EOF
+
+    - name: Debug artifact contents before upload
+      run: |
+        echo "=== Final directory structure before upload ==="
+        ls -la
+        echo "=== Files to be uploaded ==="
+        find . -type f | grep -E "(dists|pool|index\.html)" | head -20
+        echo "=== Total file count ==="
+        find . -type f | wc -l
 
     - name: Upload Pages artifact
       uses: actions/upload-pages-artifact@v3
