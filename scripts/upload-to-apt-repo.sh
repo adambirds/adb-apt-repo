@@ -45,6 +45,9 @@ echo "Package size: $(ls -lh "$PACKAGE_FILE" | awk '{print $5}')"
 # Get the basename of the package file
 PACKAGE_NAME=$(basename "$PACKAGE_FILE")
 
+# URL encode the package name for GitHub API (handle special characters like +)
+ENCODED_PACKAGE_NAME=$(echo "$PACKAGE_NAME" | sed 's/+/%2B/g; s/ /%20/g; s/&/%26/g')
+
 # Create a temporary upload URL (using GitHub releases as temporary storage)
 UPLOAD_URL="https://uploads.github.com/repos/$REPO_OWNER/$REPO_NAME/releases/assets"
 
@@ -79,7 +82,7 @@ echo "Created temporary release ID: $RELEASE_ID"
 ASSET_RESPONSE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
   -H "Content-Type: application/octet-stream" \
   --data-binary @"$PACKAGE_FILE" \
-  "https://uploads.github.com/repos/$REPO_OWNER/$REPO_NAME/releases/$RELEASE_ID/assets?name=$PACKAGE_NAME")
+  "https://uploads.github.com/repos/$REPO_OWNER/$REPO_NAME/releases/$RELEASE_ID/assets?name=$ENCODED_PACKAGE_NAME")
 
 # More robust URL extraction - try multiple patterns
 ASSET_URL=$(echo "$ASSET_RESPONSE" | grep -o '"browser_download_url"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4)

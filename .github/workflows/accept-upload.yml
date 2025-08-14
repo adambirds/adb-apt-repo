@@ -28,22 +28,48 @@ jobs:
         
         # Download the package
         if [ -n "${{ github.event.client_payload.package_url }}" ]; then
-          curl -L -o "incoming/${{ github.event.client_payload.package_name }}" "${{ github.event.client_payload.package_url }}"
+          PACKAGE_NAME="${{ github.event.client_payload.package_name }}"
+          
+          echo "Downloading to: incoming/$PACKAGE_NAME"
+          curl -L -o "incoming/$PACKAGE_NAME" "${{ github.event.client_payload.package_url }}"
           echo "Package downloaded successfully"
           
+          # Check what we actually downloaded
+          echo "File info:"
+          ls -la "incoming/$PACKAGE_NAME"
+          echo "File type:"
+          file "incoming/$PACKAGE_NAME"
+          echo "File size: $(stat -f%z "incoming/$PACKAGE_NAME" 2>/dev/null || stat -c%s "incoming/$PACKAGE_NAME")"
+          
+          # Check if it's actually a .deb file (sometimes downloads fail silently)
+          if [ ! -f "incoming/$PACKAGE_NAME" ]; then
+            echo "Error: Downloaded file does not exist"
+            exit 1
+          fi
+          
+          # Check file size (should be larger than a few KB for a real package)
+          FILE_SIZE=$(stat -f%z "incoming/$PACKAGE_NAME" 2>/dev/null || stat -c%s "incoming/$PACKAGE_NAME")
+          if [ "$FILE_SIZE" -lt 1000 ]; then
+            echo "Error: Downloaded file is too small ($FILE_SIZE bytes), likely an error page"
+            echo "File contents:"
+            cat "incoming/$PACKAGE_NAME"
+            exit 1
+          fi
+          
           # Verify it's a valid .deb file
-          if file "incoming/${{ github.event.client_payload.package_name }}" | grep -q "Debian binary package"; then
+          if file "incoming/$PACKAGE_NAME" | grep -q "Debian binary package"; then
             echo "Valid Debian package confirmed"
             
             # Commit the package to trigger rebuild
             git config --local user.email "action@github.com"
             git config --local user.name "GitHub Action"
             git add incoming/
-            git commit -m "Add package: ${{ github.event.client_payload.package_name }}"
+            git commit -m "Add package: $PACKAGE_NAME"
             git push
           else
             echo "Error: Invalid package file"
-            rm "incoming/${{ github.event.client_payload.package_name }}"
+            echo "File type check failed for: incoming/$PACKAGE_NAME"
+            rm "incoming/$PACKAGE_NAME"
             exit 1
           fi
         else
