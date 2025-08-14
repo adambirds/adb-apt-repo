@@ -2,9 +2,11 @@
 # Packages placed here will be automatically processed by GitHub Actions
 # and added to the repository
 
-# Legacy location - packages in root incoming/
-*.deb
+# Legacy location - ignore packages in root incoming/ directory only
+/*.deb
 
-# New structure - packages go in subdirectories:
-# - incoming/stable/ for production releases
-# - incoming/testing/ for development/beta packages
+# New structure - packages go in subdirectories and should be committed:
+# - incoming/stable/main/ for production releases in main component
+# - incoming/stable/contrib/ for production releases in contrib component  
+# - incoming/testing/main/ for development/beta packages in main component
+# - incoming/testing/contrib/ for development/beta packages in contrib component
