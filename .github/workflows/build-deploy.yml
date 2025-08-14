@@ -231,7 +231,8 @@ jobs:
             else
               # This is a package directory like pool/main/p/pypi-package-updater/
               pkg_name=$(basename "$dir")
-              breadcrumb='<div class="breadcrumb"><a href="../">← Back to $(basename "$(dirname "$dir")")</a></div>'
+              parent_dir=$(basename "$(dirname "$dir")")
+              breadcrumb="<div class=\"breadcrumb\"><a href=\"../\">← Back to $parent_dir</a></div>"
               content=""
               for file in "$dir"/*.deb; do
                 if [ -f "$file" ]; then
