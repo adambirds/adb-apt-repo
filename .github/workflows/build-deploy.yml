@@ -211,6 +211,50 @@ jobs:
         </html>
         EOF
 
+    - name: Create directory index files for GitHub Pages
+      run: |
+        # Create index.html files for main directories that APT clients access
+        
+        # Main dists directory
+        cat > dists/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>APT Repository - Distributions</title>
+        </head>
+        <body>
+            <h1>APT Repository - Distributions</h1>
+            <p>Available distributions:</p>
+            <ul>
+                <li><a href="stable/">stable/</a></li>
+                <li><a href="testing/">testing/</a></li>
+            </ul>
+        </body>
+        </html>
+        EOF
+        
+        # Main pool directory
+        cat > pool/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>APT Repository - Package Pool</title>
+        </head>
+        <body>
+            <h1>APT Repository - Package Pool</h1>
+            <p>Package pool organized by component:</p>
+            <ul>
+                <li><a href="main/">main/</a></li>
+            </ul>
+        </body>
+        </html>
+        EOF
+        
+        # Create .nojekyll to prevent GitHub Pages from processing files
+        touch .nojekyll
+        
+        echo "Created directory index files for GitHub Pages compatibility"
+
     - name: Debug artifact contents before upload
       run: |
         echo "=== Final directory structure before upload ==="
