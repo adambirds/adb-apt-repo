@@ -144,409 +144,73 @@ jobs:
 
     - name: Create index page
       run: |
-        cat > index.html << 'EOF'
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>ADB APT Repository</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .container { max-width: 800px; }
-                pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
-                .command { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>ADB APT Repository</h1>
-                <p>Welcome to the ADB APT repository. This repository hosts Debian packages.</p>
-                
-                <h2>Quick Setup</h2>
-                <p>Add this repository to your system:</p>
-                <pre class="command">
-        # Add the repository
-        echo "deb https://adambirds.github.io/adb-apt-repo stable main" | sudo tee /etc/apt/sources.list.d/adb-apt-repo.list
-        
-        # Add the GPG key (modern method)
-        curl -fsSL https://adambirds.github.io/adb-apt-repo/pubkey.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/adb-apt-repo.gpg
-        
-        # Update package list
-        sudo apt update
-                </pre>
-                
-                <h2>Alternative Setup (for older systems)</h2>
-                <p>If you're using an older Ubuntu/Debian version:</p>
-                <pre class="command">
-        # Add the repository
-        echo "deb https://adambirds.github.io/adb-apt-repo stable main" | sudo tee /etc/apt/sources.list.d/adb-apt-repo.list
-        
-        # Add the GPG key (legacy method)
-        curl -fsSL https://adambirds.github.io/adb-apt-repo/pubkey.gpg | sudo apt-key add -
-        
-        # Update package list
-        sudo apt update
-                </pre>
-                
-                <h2>Available Distributions</h2>
-                <ul>
-                    <li><strong>stable</strong> - Stable packages</li>
-                    <li><strong>testing</strong> - Testing packages</li>
-                </ul>
-                
-                <h2>Available Components</h2>
-                <ul>
-                    <li><strong>main</strong> - Main packages</li>
-                    <li><strong>contrib</strong> - Contributed packages</li>
-                </ul>
-                
-                <h2>Repository Information</h2>
-                <ul>
-                    <li><a href="./dists/">Browse distributions</a></li>
-                    <li><a href="./pool/">Browse packages</a></li>
-                    <li><a href="./pubkey.gpg">Download GPG public key</a></li>
-                </ul>
-                
-                <p><em>Last updated: </em></p>
-            </div>
-        </body>
-        </html>
-        EOF
-        
-        # Add the current date to the index page
-        sed -i "s|Last updated: </em>|Last updated: $(date)</em>|" index.html
+        # Copy the template and replace the placeholder
+        cp templates/index.html index.html
+        sed -i "s|{{LAST_UPDATED}}|$(date)|g" index.html
 
     - name: Create directory index pages
       run: |
         # Create .nojekyll to prevent GitHub Pages from processing files
         touch .nojekyll
         
+        # Source the template generator functions
+        source templates/generate.sh
+        
         # Create dists/index.html
-        cat > dists/index.html << 'EOF'
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>ADB APT Repository - Distributions</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .container { max-width: 800px; }
-                pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
-                .command { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; }
-                .breadcrumb { color: #666; margin-bottom: 20px; }
-                ul li { margin: 8px 0; }
-                a { color: #0366d6; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="breadcrumb"><a href="../">← Back to Repository</a></div>
-                <h1>Distributions</h1>
-                <p>Available distributions in this APT repository:</p>
-                <ul>
-                    <li><a href="stable/"><strong>stable/</strong> - Stable packages for production use</a></li>
-                    <li><a href="testing/"><strong>testing/</strong> - Testing packages for development</a></li>
-                </ul>
-            </div>
-        </body>
-        </html>
-        EOF
+        breadcrumb='<div class="breadcrumb"><a href="../">← Back to Repository</a></div>'
+        content='<li><a href="stable/">📁 stable/</a><div class="description">Stable packages for production use</div></li><li><a href="testing/">📁 testing/</a><div class="description">Testing packages for development</div></li>'
+        generate_directory_index "templates/directory.html" "dists/index.html" "Distributions" "Distributions" "Available distributions in this APT repository:" "$breadcrumb" "$content"
         
         # Create pool/index.html
-        cat > pool/index.html << 'EOF'
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>ADB APT Repository - Package Pool</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .container { max-width: 800px; }
-                pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
-                .command { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; }
-                .breadcrumb { color: #666; margin-bottom: 20px; }
-                ul li { margin: 8px 0; }
-                a { color: #0366d6; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="breadcrumb"><a href="../">← Back to Repository</a></div>
-                <h1>Package Pool</h1>
-                <p>Package pool organized by component:</p>
-                <ul>
-                    <li><a href="main/"><strong>main/</strong> - Main component packages</a></li>
-                </ul>
-            </div>
-        </body>
-        </html>
-        EOF
+        breadcrumb='<div class="breadcrumb"><a href="../">← Back to Repository</a></div>'
+        content='<li><a href="main/">📁 main/</a><div class="description">Main component packages</div></li>'
+        generate_directory_index "templates/directory.html" "pool/index.html" "Package Pool" "Package Pool" "Package pool organized by component:" "$breadcrumb" "$content"
         
         # Create dists/stable/index.html
-        cat > dists/stable/index.html << 'EOF'
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>ADB APT Repository - Stable Distribution</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .container { max-width: 800px; }
-                pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
-                .command { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; }
-                .breadcrumb { color: #666; margin-bottom: 20px; }
-                ul li { margin: 8px 0; }
-                a { color: #0366d6; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="breadcrumb"><a href="../">← Back to Distributions</a></div>
-                <h1>Stable Distribution</h1>
-                <p>Components available in the stable distribution:</p>
-                <ul>
-                    <li><a href="main/"><strong>main/</strong> - Main packages</a></li>
-                    <li><a href="contrib/"><strong>contrib/</strong> - Contributed packages</a></li>
-                </ul>
-                <h2>Repository Metadata</h2>
-                <ul>
-                    <li><a href="Release">Release</a> - Distribution release information</li>
-                    <li><a href="Release.gpg">Release.gpg</a> - GPG signature</li>
-                    <li><a href="InRelease">InRelease</a> - Inline signed release</li>
-                </ul>
-            </div>
-        </body>
-        </html>
-        EOF
+        breadcrumb='<div class="breadcrumb"><a href="../">← Back to Distributions</a></div>'
+        content='<li><a href="main/">📁 main/</a><div class="description">Main packages</div></li><li><a href="contrib/">📁 contrib/</a><div class="description">Contributed packages</div></li><li><a href="Release">📄 Release</a><div class="description">Distribution release information</div></li><li><a href="Release.gpg">🔑 Release.gpg</a><div class="description">GPG signature</div></li><li><a href="InRelease">📄 InRelease</a><div class="description">Inline signed release</div></li>'
+        generate_directory_index "templates/directory.html" "dists/stable/index.html" "Stable Distribution" "Stable Distribution" "Components and metadata available in the stable distribution:" "$breadcrumb" "$content"
         
         # Create dists/testing/index.html
-        cat > dists/testing/index.html << 'EOF'
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>ADB APT Repository - Testing Distribution</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .container { max-width: 800px; }
-                pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
-                .command { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; }
-                .breadcrumb { color: #666; margin-bottom: 20px; }
-                ul li { margin: 8px 0; }
-                a { color: #0366d6; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="breadcrumb"><a href="../">← Back to Distributions</a></div>
-                <h1>Testing Distribution</h1>
-                <p>Components available in the testing distribution:</p>
-                <ul>
-                    <li><a href="main/"><strong>main/</strong> - Main packages</a></li>
-                    <li><a href="contrib/"><strong>contrib/</strong> - Contributed packages</a></li>
-                </ul>
-                <h2>Repository Metadata</h2>
-                <ul>
-                    <li><a href="Release">Release</a> - Distribution release information</li>
-                    <li><a href="Release.gpg">Release.gpg</a> - GPG signature</li>
-                    <li><a href="InRelease">InRelease</a> - Inline signed release</li>
-                </ul>
-            </div>
-        </body>
-        </html>
-        EOF
+        breadcrumb='<div class="breadcrumb"><a href="../">← Back to Distributions</a></div>'
+        content='<li><a href="main/">📁 main/</a><div class="description">Main packages</div></li><li><a href="contrib/">📁 contrib/</a><div class="description">Contributed packages</div></li><li><a href="Release">📄 Release</a><div class="description">Distribution release information</div></li><li><a href="Release.gpg">🔑 Release.gpg</a><div class="description">GPG signature</div></li><li><a href="InRelease">📄 InRelease</a><div class="description">Inline signed release</div></li>'
+        generate_directory_index "templates/directory.html" "dists/testing/index.html" "Testing Distribution" "Testing Distribution" "Components and metadata available in the testing distribution:" "$breadcrumb" "$content"
         
         # Create dists/stable/main/index.html
-        cat > dists/stable/main/index.html << 'EOF'
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>ADB APT Repository - Stable/Main</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .container { max-width: 800px; }
-                pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
-                .command { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; }
-                .breadcrumb { color: #666; margin-bottom: 20px; }
-                ul li { margin: 8px 0; }
-                a { color: #0366d6; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="breadcrumb"><a href="../">← Back to Stable</a></div>
-                <h1>Stable - Main Component</h1>
-                <p>Binary packages for different architectures:</p>
-                <ul>
-                    <li><a href="binary-amd64/"><strong>binary-amd64/</strong> - AMD64 packages</a></li>
-                    <li><a href="binary-arm64/"><strong>binary-arm64/</strong> - ARM64 packages</a></li>
-                    <li><a href="binary-armhf/"><strong>binary-armhf/</strong> - ARM hard-float packages</a></li>
-                </ul>
-            </div>
-        </body>
-        </html>
-        EOF
+        breadcrumb='<div class="breadcrumb"><a href="../">← Back to Stable</a></div>'
+        content='<li><a href="binary-amd64/">📁 binary-amd64/</a><div class="description">AMD64 packages</div></li><li><a href="binary-arm64/">📁 binary-arm64/</a><div class="description">ARM64 packages</div></li><li><a href="binary-armhf/">📁 binary-armhf/</a><div class="description">ARM hard-float packages</div></li>'
+        generate_directory_index "templates/directory.html" "dists/stable/main/index.html" "Stable/Main" "Stable - Main Component" "Binary packages for different architectures:" "$breadcrumb" "$content"
         
         # Create dists/testing/main/index.html
-        cat > dists/testing/main/index.html << 'EOF'
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>ADB APT Repository - Testing/Main</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .container { max-width: 800px; }
-                pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
-                .command { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; }
-                .breadcrumb { color: #666; margin-bottom: 20px; }
-                ul li { margin: 8px 0; }
-                a { color: #0366d6; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="breadcrumb"><a href="../">← Back to Testing</a></div>
-                <h1>Testing - Main Component</h1>
-                <p>Binary packages for different architectures:</p>
-                <ul>
-                    <li><a href="binary-amd64/"><strong>binary-amd64/</strong> - AMD64 packages</a></li>
-                    <li><a href="binary-arm64/"><strong>binary-arm64/</strong> - ARM64 packages</a></li>
-                    <li><a href="binary-armhf/"><strong>binary-armhf/</strong> - ARM hard-float packages</a></li>
-                </ul>
-            </div>
-        </body>
-        </html>
-        EOF
+        breadcrumb='<div class="breadcrumb"><a href="../">← Back to Testing</a></div>'
+        content='<li><a href="binary-amd64/">📁 binary-amd64/</a><div class="description">AMD64 packages</div></li><li><a href="binary-arm64/">📁 binary-arm64/</a><div class="description">ARM64 packages</div></li><li><a href="binary-armhf/">📁 binary-armhf/</a><div class="description">ARM hard-float packages</div></li>'
+        generate_directory_index "templates/directory.html" "dists/testing/main/index.html" "Testing/Main" "Testing - Main Component" "Binary packages for different architectures:" "$breadcrumb" "$content"
         
         # Create binary architecture pages for stable/main
         for arch in amd64 arm64 armhf; do
-          cat > "dists/stable/main/binary-$arch/index.html" << EOF
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>ADB APT Repository - Stable/Main/$arch</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .container { max-width: 800px; }
-                pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
-                .command { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; }
-                .breadcrumb { color: #666; margin-bottom: 20px; }
-                ul li { margin: 8px 0; }
-                a { color: #0366d6; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="breadcrumb"><a href="../">← Back to Main</a></div>
-                <h1>Stable - Main - $arch</h1>
-                <p>Package metadata files for $arch architecture:</p>
-                <ul>
-                    <li><a href="Packages"><strong>Packages</strong> - Package list</a></li>
-                    <li><a href="Packages.gz"><strong>Packages.gz</strong> - Compressed package list</a></li>
-                    <li><a href="Release"><strong>Release</strong> - Release information</a></li>
-                </ul>
-            </div>
-        </body>
-        </html>
-        EOF
+          breadcrumb='<div class="breadcrumb"><a href="../">← Back to Main</a></div>'
+          content='<li><a href="Packages">📄 Packages</a><div class="description">Package list</div></li><li><a href="Packages.gz">📄 Packages.gz</a><div class="description">Compressed package list</div></li><li><a href="Release">📄 Release</a><div class="description">Release information</div></li>'
+          generate_directory_index "templates/directory.html" "dists/stable/main/binary-$arch/index.html" "Stable/Main/$arch" "Stable - Main - $arch" "Package metadata files for $arch architecture:" "$breadcrumb" "$content"
         done
         
         # Create binary architecture pages for testing/main
         for arch in amd64 arm64 armhf; do
-          cat > "dists/testing/main/binary-$arch/index.html" << EOF
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>ADB APT Repository - Testing/Main/$arch</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .container { max-width: 800px; }
-                pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
-                .command { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; }
-                .breadcrumb { color: #666; margin-bottom: 20px; }
-                ul li { margin: 8px 0; }
-                a { color: #0366d6; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="breadcrumb"><a href="../">← Back to Main</a></div>
-                <h1>Testing - Main - $arch</h1>
-                <p>Package metadata files for $arch architecture:</p>
-                <ul>
-                    <li><a href="Packages"><strong>Packages</strong> - Package list</a></li>
-                    <li><a href="Packages.gz"><strong>Packages.gz</strong> - Compressed package list</a></li>
-                    <li><a href="Release"><strong>Release</strong> - Release information</a></li>
-                </ul>
-            </div>
-        </body>
-        </html>
-        EOF
+          breadcrumb='<div class="breadcrumb"><a href="../">← Back to Main</a></div>'
+          content='<li><a href="Packages">📄 Packages</a><div class="description">Package list</div></li><li><a href="Packages.gz">📄 Packages.gz</a><div class="description">Compressed package list</div></li><li><a href="Release">📄 Release</a><div class="description">Release information</div></li>'
+          generate_directory_index "templates/directory.html" "dists/testing/main/binary-$arch/index.html" "Testing/Main/$arch" "Testing - Main - $arch" "Package metadata files for $arch architecture:" "$breadcrumb" "$content"
         done
         
-        # Create pool/main/index.html
+        # Generate dynamic content for pool directories
         if [ -d "pool/main" ]; then
-          cat > pool/main/index.html << 'EOF'
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>ADB APT Repository - Main Component Pool</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .container { max-width: 800px; }
-                pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
-                .command { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; }
-                .breadcrumb { color: #666; margin-bottom: 20px; }
-                ul li { margin: 8px 0; }
-                a { color: #0366d6; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="breadcrumb"><a href="../">← Back to Pool</a></div>
-                <h1>Main Component Pool</h1>
-                <p>Packages organized by first letter:</p>
-                <ul>
-        EOF
-          
-          # List actual directories in pool/main
+          breadcrumb='<div class="breadcrumb"><a href="../">← Back to Pool</a></div>'
+          content=""
           for dir in pool/main/*/; do
             if [ -d "$dir" ]; then
               dirname=$(basename "$dir")
-              echo "                    <li><a href=\"$dirname/\"><strong>$dirname/</strong> - Packages starting with '$dirname'</a></li>" >> pool/main/index.html
+              content="$content<li><a href=\"$dirname/\">📁 $dirname/</a><div class=\"description\">Packages starting with '$dirname'</div></li>"
             fi
           done
-          
-          cat >> pool/main/index.html << 'EOF'
-                </ul>
-            </div>
-        </body>
-        </html>
-        EOF
+          generate_directory_index "templates/directory.html" "pool/main/index.html" "Main Component Pool" "Main Component Pool" "Packages organized by first letter:" "$breadcrumb" "$content"
         fi
         
         # Create index pages for letter directories and package directories
@@ -555,94 +219,32 @@ jobs:
             letter=$(basename "$(dirname "$dir")")
             if [ "$(dirname "$dir")" = "pool/main" ]; then
               # This is a letter directory like pool/main/p/
-              cat > "$dir/index.html" << EOF
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>ADB APT Repository - Packages starting with '$letter'</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .container { max-width: 800px; }
-                pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
-                .command { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; }
-                .breadcrumb { color: #666; margin-bottom: 20px; }
-                ul li { margin: 8px 0; }
-                a { color: #0366d6; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="breadcrumb"><a href="../">← Back to Main Pool</a></div>
-                <h1>Packages starting with '$letter'</h1>
-                <p>Available packages:</p>
-                <ul>
-        EOF
-              
-              # List package directories
+              breadcrumb='<div class="breadcrumb"><a href="../">← Back to Main Pool</a></div>'
+              content=""
               for pkg_dir in "$dir"/*; do
                 if [ -d "$pkg_dir" ]; then
                   pkg_name=$(basename "$pkg_dir")
-                  echo "                    <li><a href=\"$pkg_name/\"><strong>$pkg_name/</strong></a></li>" >> "$dir/index.html"
+                  content="$content<li><a href=\"$pkg_name/\">📁 $pkg_name/</a><div class=\"description\">Package directory</div></li>"
                 fi
               done
-              
-              cat >> "$dir/index.html" << 'EOF'
-                </ul>
-            </div>
-        </body>
-        </html>
-        EOF
+              generate_directory_index "templates/directory.html" "$dir/index.html" "Packages starting with '$letter'" "Packages starting with '$letter'" "Available packages:" "$breadcrumb" "$content"
             else
               # This is a package directory like pool/main/p/pypi-package-updater/
               pkg_name=$(basename "$dir")
-              cat > "$dir/index.html" << EOF
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>ADB APT Repository - $pkg_name</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .container { max-width: 800px; }
-                pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
-                .command { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; }
-                .breadcrumb { color: #666; margin-bottom: 20px; }
-                ul li { margin: 8px 0; }
-                a { color: #0366d6; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="breadcrumb"><a href="../">← Back to $(basename "$(dirname "$dir")")</a></div>
-                <h1>Package: $pkg_name</h1>
-                <p>Available package files:</p>
-                <ul>
-        EOF
-              
-              # List .deb files
+              breadcrumb='<div class="breadcrumb"><a href="../">← Back to $(basename "$(dirname "$dir")")</a></div>'
+              content=""
               for file in "$dir"/*.deb; do
                 if [ -f "$file" ]; then
                   filename=$(basename "$file")
-                  echo "                    <li><a href=\"$filename\"><strong>$filename</strong> - Debian package</a></li>" >> "$dir/index.html"
+                  content="$content<li><a href=\"$filename\">📦 $filename</a><div class=\"description\">Debian package</div></li>"
                 fi
               done
-              
-              cat >> "$dir/index.html" << 'EOF'
-                </ul>
-            </div>
-        </body>
-        </html>
-        EOF
+              generate_directory_index "templates/directory.html" "$dir/index.html" "$pkg_name" "Package: $pkg_name" "Available package files:" "$breadcrumb" "$content"
             fi
           fi
         done
         
-        echo "Created all directory index pages with consistent styling"
+        echo "Generated all directory index pages from templates"
 
     - name: Upload Pages artifact
       uses: actions/upload-pages-artifact@v3
