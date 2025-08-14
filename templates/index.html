@@ -82,14 +82,7 @@
             border-radius: 6px;
             margin: 20px 0;
         }
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin: 30px 0;
-        }
         @media (max-width: 768px) {
-            .grid { grid-template-columns: 1fr; }
             .container { padding: 20px; }
         }
     </style>
@@ -116,44 +109,20 @@
         <p>Welcome to the ADB APT repository. This repository hosts Debian packages for easy installation and updates.</p>
         
         <h2>📦 Quick Setup</h2>
-        <p>Choose the setup method that works best for your system:</p>
         
-        <div class="grid">
-            <div>
-                <h3>🔧 Modern Method (Recommended)</h3>
-                <div class="code-container">
-                    <div class="code-header">
-                        <span>Ubuntu 20.04+ / Debian 11+</span>
-                        <button class="copy-btn" onclick="copyToClipboard(this, '# Add the repository\necho \"deb https://adambirds.github.io/adb-apt-repo stable main\" | sudo tee /etc/apt/sources.list.d/adb-apt-repo.list\n\n# Add the GPG key (modern method)\ncurl -fsSL https://adambirds.github.io/adb-apt-repo/pubkey.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/adb-apt-repo.gpg\n\n# Update package list\nsudo apt update')">Copy</button>
-                    </div>
-                    <pre># Add the repository
+        <div class="code-container">
+            <div class="code-header">
+                <span>Add Repository</span>
+                <button class="copy-btn" onclick="copyToClipboard(this, '# Add the repository\necho \"deb https://adambirds.github.io/adb-apt-repo stable main\" | sudo tee /etc/apt/sources.list.d/adb-apt-repo.list\n\n# Add the GPG key\ncurl -fsSL https://adambirds.github.io/adb-apt-repo/pubkey.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/adb-apt-repo.gpg\n\n# Update package list\nsudo apt update')">Copy</button>
+            </div>
+            <pre># Add the repository
 echo "deb https://adambirds.github.io/adb-apt-repo stable main" | sudo tee /etc/apt/sources.list.d/adb-apt-repo.list
 
-# Add the GPG key (modern method)
+# Add the GPG key
 curl -fsSL https://adambirds.github.io/adb-apt-repo/pubkey.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/adb-apt-repo.gpg
 
 # Update package list
 sudo apt update</pre>
-                </div>
-            </div>
-            
-            <div>
-                <h3>🔄 Legacy Method</h3>
-                <div class="code-container">
-                    <div class="code-header">
-                        <span>Older Ubuntu/Debian versions</span>
-                        <button class="copy-btn" onclick="copyToClipboard(this, '# Add the repository\necho \"deb https://adambirds.github.io/adb-apt-repo stable main\" | sudo tee /etc/apt/sources.list.d/adb-apt-repo.list\n\n# Add the GPG key (legacy method)\ncurl -fsSL https://adambirds.github.io/adb-apt-repo/pubkey.gpg | sudo apt-key add -\n\n# Update package list\nsudo apt update')">Copy</button>
-                    </div>
-                    <pre># Add the repository
-echo "deb https://adambirds.github.io/adb-apt-repo stable main" | sudo tee /etc/apt/sources.list.d/adb-apt-repo.list
-
-# Add the GPG key (legacy method)
-curl -fsSL https://adambirds.github.io/adb-apt-repo/pubkey.gpg | sudo apt-key add -
-
-# Update package list
-sudo apt update</pre>
-                </div>
-            </div>
         </div>
         
         <h2>🧪 Adding Testing Distribution</h2>
@@ -170,7 +139,8 @@ deb https://adambirds.github.io/adb-apt-repo stable main
 deb https://adambirds.github.io/adb-apt-repo testing main
 EOF
 
-# Add the GPG key (choose modern or legacy method above)
+# Add the GPG key
+curl -fsSL https://adambirds.github.io/adb-apt-repo/pubkey.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/adb-apt-repo.gpg
 # Then update package lists
 sudo apt update</pre>
         </div>
