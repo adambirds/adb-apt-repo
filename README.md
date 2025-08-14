@@ -150,7 +150,22 @@ Add this repository to your APT sources:
 # Add the repository
 echo "deb https://adambirds.github.io/adb-apt-repo stable main" | sudo tee /etc/apt/sources.list.d/adb-apt-repo.list
 
-# Add the GPG key (replace with your actual key)
+# Add the GPG key (modern method - recommended)
+curl -fsSL https://adambirds.github.io/adb-apt-repo/pubkey.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/adb-apt-repo.gpg
+
+# Update package list
+sudo apt update
+```
+
+### Alternative Setup (for older systems)
+
+If you're using an older Ubuntu/Debian version:
+
+```bash
+# Add the repository
+echo "deb https://adambirds.github.io/adb-apt-repo stable main" | sudo tee /etc/apt/sources.list.d/adb-apt-repo.list
+
+# Add the GPG key (legacy method)
 curl -fsSL https://adambirds.github.io/adb-apt-repo/pubkey.gpg | sudo apt-key add -
 
 # Update package list

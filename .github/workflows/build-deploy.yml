@@ -169,7 +169,20 @@ jobs:
         # Add the repository
         echo "deb https://adambirds.github.io/adb-apt-repo stable main" | sudo tee /etc/apt/sources.list.d/adb-apt-repo.list
         
-        # Add the GPG key
+        # Add the GPG key (modern method)
+        curl -fsSL https://adambirds.github.io/adb-apt-repo/pubkey.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/adb-apt-repo.gpg
+        
+        # Update package list
+        sudo apt update
+                </pre>
+                
+                <h2>Alternative Setup (for older systems)</h2>
+                <p>If you're using an older Ubuntu/Debian version:</p>
+                <pre class="command">
+        # Add the repository
+        echo "deb https://adambirds.github.io/adb-apt-repo stable main" | sudo tee /etc/apt/sources.list.d/adb-apt-repo.list
+        
+        # Add the GPG key (legacy method)
         curl -fsSL https://adambirds.github.io/adb-apt-repo/pubkey.gpg | sudo apt-key add -
         
         # Update package list
